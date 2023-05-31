@@ -37,13 +37,14 @@ contract FundingPlatformsStorage {
         uint256 startTimestamp,
         uint256 endTimestamp
     ) external isCreationAllowed(eventIdentifier) {
-
-        FundingLibrary.ProjectData storage eventData = fundingPlatforms[eventIdentifier];
-            eventData.name = title;
-            eventData.purpose = purpose;
-            eventData.fundingGoal = fundingGoal;
-            eventData.eventStartTimestamp = startTimestamp;
-            eventData.eventEndTimestamp = endTimestamp;
+        FundingLibrary.ProjectData storage eventData = fundingPlatforms[
+            eventIdentifier
+        ];
+        eventData.name = title;
+        eventData.purpose = purpose;
+        eventData.fundingGoal = fundingGoal;
+        eventData.eventStartTimestamp = startTimestamp;
+        eventData.eventEndTimestamp = endTimestamp;
 
         createdEvents[eventIdentifier] = true;
     }
