@@ -9,6 +9,13 @@ import "./FundingPlatformsStorage.sol";
  * @dev Контракт за събиране на средства спряло дадена кампания
  */
 contract FundingPlatformsManager is FundingPlatformsStorage {
+    // internal variables
+    // ------------------------------------
+
+    // Мап с данни за всяко дарение на п
+    mapping(address => mapping(uint256 => FundingLibrary.FundingContributor))
+        internal contributors;
+
     // Internal functions
     // ------------------------------------
 
@@ -47,14 +54,39 @@ contract FundingPlatformsManager is FundingPlatformsStorage {
      * @notice  Функция с която отчитаме събраните средства.
      * @dev     Добавяме средствата, като може да минем.
      * @param   eventIdentifier Уникален идентификатор на събитието.
-     * @param   fundAmount Средства който ще се дарят.
+     * @param   amount Средства който ще се дарят.
      */
-    function _accountFundToEvent(
+    function _accountEventFund(
         uint256 eventIdentifier,
-        uint256 fundAmount
+        uint256 amount
     ) internal {
+        FundingLibrary.FundingContributor storage contributor = contributors[
+            msg.sender
+        ][eventIdentifier];
+
         unchecked {
-            fundingPlatforms[eventIdentifier].collectedAmount += fundAmount;
+            fundingPlatforms[eventIdentifier].collectedAmount += amount;
+            contributor.funds += amount;
+        }
+    }
+
+    /**
+     * @notice  Функция с която отчитаме събраните средства.
+     * @dev     Добавяме средствата, като може да минем.
+     * @param   eventIdentifier Уникален идентификатор на събитието.
+     * @param   amount Средства който ще се дарят.
+     */
+    function _accountEventRefund(
+        uint256 eventIdentifier,
+        uint256 amount
+    ) internal {
+        FundingLibrary.FundingContributor storage contributor = contributors[
+            msg.sender
+        ][eventIdentifier];
+
+        unchecked {
+            fundingPlatforms[eventIdentifier].collectedAmount -= amount;
+            contributor.funds -= amount;
         }
     }
 
@@ -62,15 +94,31 @@ contract FundingPlatformsManager is FundingPlatformsStorage {
      * @notice  Функция която проверява дали сумата за даряване е позволена.
      * @dev     .
      * @param   eventIdentifier Уникален идентификатор на събитието..
-     * @param   fundAmount Средства който ще се дарят.
+     * @param   amount Средства който ще се дарят.
      */
     function _isFundingAmountAllowed(
         uint256 eventIdentifier,
-        uint256 fundAmount
+        uint256 amount
     ) internal view {
         require(
-            fundingPlatforms[eventIdentifier].fundingGoal >= fundAmount,
+            fundingPlatforms[eventIdentifier].fundingGoal >= amount,
             "To much"
+        );
+    }
+
+    /**
+     * @notice  .
+     * @dev     .
+     * @param   eventIdentifier  .
+     * @param   amount  .
+     */
+    function _isRefundAmountApproved(
+        uint256 eventIdentifier,
+        uint256 amount
+    ) internal view {
+        require(
+            contributors[msg.sender][eventIdentifier].funds >= amount,
+            "Not enough amount to refund"
         );
     }
 
@@ -81,7 +129,8 @@ contract FundingPlatformsManager is FundingPlatformsStorage {
      */
     function _isFundGoalCollected(uint256 eventIdentifier) internal view {
         require(
-            fundingPlatforms[eventIdentifier].collectedAmount >= fundingPlatforms[eventIdentifier].fundingGoal,
+            fundingPlatforms[eventIdentifier].collectedAmount >=
+                fundingPlatforms[eventIdentifier].fundingGoal,
             "The goal is not collected"
         );
     }
@@ -92,8 +141,8 @@ contract FundingPlatformsManager is FundingPlatformsStorage {
     /**
      * @dev Проверяваме дали може да дарим средства
      */
-    modifier isFundingAllowed(uint256 eventIdentifier, uint256 fundAmount) {
-        _isFundingAmountAllowed(eventIdentifier, fundAmount);
+    modifier isFundingAllowed(uint256 eventIdentifier, uint256 amount) {
+        _isFundingAmountAllowed(eventIdentifier, amount);
         _isPlatformOpenForDonations(eventIdentifier);
         _;
     }
@@ -103,6 +152,14 @@ contract FundingPlatformsManager is FundingPlatformsStorage {
      */
     modifier isWithdrawAllowed(uint256 eventIdentifier) {
         _isFundGoalCollected(eventIdentifier);
+        _;
+    }
+
+    /**
+     * @dev Поверяваме дали може да изтеглим дарените средства
+     */
+    modifier isRefundAllowed(uint256 eventIdentifier, uint256 amount) {
+        _isRefundAmountApproved(eventIdentifier, amount);
         _;
     }
 }
