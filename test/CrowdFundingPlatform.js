@@ -94,7 +94,7 @@ describe("CrowdFundingPlatformFactory", function () {
       await createEvent(lock, 12, "3");
 
       await expect(
-        lock.sendFunds(12, { value: ethers.utils.parseUnits("4", "ether") })
+        lock.fund(12, { value: ethers.utils.parseUnits("4", "ether") })
       ).to.be.revertedWith("To much");
     });
 
@@ -106,7 +106,7 @@ describe("CrowdFundingPlatformFactory", function () {
       await createEvent(lock, 12, "3");
 
       await expect(
-        lock.sendFunds(12, { value: ethers.utils.parseUnits("2", "ether") })
+        lock.fund(12, { value: ethers.utils.parseUnits("2", "ether") })
       ).not.to.be.reverted;
     });
 
@@ -119,8 +119,27 @@ describe("CrowdFundingPlatformFactory", function () {
       await createEventWith(lock, 12, "3", beginTimestamp, endTimestamp);
 
       await expect(
-        lock.sendFunds(12, { value: ethers.utils.parseUnits("2", "ether") })
+        lock.fund(12, { value: ethers.utils.parseUnits("2", "ether") })
       ).to.be.revertedWith("The funding not open yet.");
+    });
+
+  });
+
+  describe("Refunding", function () {
+    it("Succesfully refund", async function () {
+      const { lock,  } = await loadFixture(
+        deployOneYearLockFixture
+      );
+      const beginTimestamp = 1685513026;
+      const endTimestamp = 1690081426;
+
+      await createEventWith(lock, 12, "3", beginTimestamp, endTimestamp);
+      lock.fund(12, { value: ethers.utils.parseUnits("3", "ether")});
+      lock.fund(12, { value: ethers.utils.parseUnits("3", "ether")});
+
+      await expect(
+        lock.refund(12, { value: ethers.utils.parseUnits("6", "ether")})
+      ).not.to.be.reverted;
     });
 
   });
@@ -134,8 +153,8 @@ describe("CrowdFundingPlatformFactory", function () {
       const endTimestamp = 1690081426;
 
       await createEventWith(lock, 12, "3", beginTimestamp, endTimestamp);
-      lock.sendFunds(12, { value: ethers.utils.parseUnits("3", "ether")});
-      lock.sendFunds(12, { value: ethers.utils.parseUnits("3", "ether")});
+      lock.fund(12, { value: ethers.utils.parseUnits("3", "ether")});
+      lock.fund(12, { value: ethers.utils.parseUnits("3", "ether")});
 
       await expect(
         lock.withdrawFunds(12)
