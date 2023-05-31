@@ -16,4 +16,10 @@ library FundingLibrary {
         // Крайна дата на събирането на средства
         uint256 eventEndTimestamp;
     }
+
+    struct FundingContributor{
+        // Дарени средства
+        uint256 funds;
+    }
+
 }
