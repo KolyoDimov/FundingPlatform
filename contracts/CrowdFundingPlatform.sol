@@ -18,10 +18,21 @@ contract CrowdFundingPlatform is Ownable, FundingPlatformsManager {
      * @dev     .
      * @param   eventIdentifier Уникален идентификатор на събитието.
      */
-    function sendFunds(
+    function fund(
         uint256 eventIdentifier
     ) external payable isFundingAllowed(eventIdentifier, msg.value) {
-        _accountFundToEvent(eventIdentifier, msg.value);
+        _accountEventFund(eventIdentifier, msg.value);
+    }
+
+    /**
+     * @notice  Функция, чрез, която даритеря си връща парите
+     * @dev     .
+     * @param   eventIdentifier Уникален идентификатор на събитието.
+     */
+    function refund(
+        uint256 eventIdentifier
+    ) external payable isRefundAllowed(eventIdentifier, msg.value) {
+        _accountEventRefund(eventIdentifier, msg.value);
     }
 
     /**
